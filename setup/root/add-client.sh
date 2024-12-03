@@ -74,6 +74,7 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 			echo "Can't load client keys!"
 			exit 11
 		fi
+        DATE=$(date -d "+$CLIENT_CERT_EXPIRE days" + '%d-%m-%Y')
 	}
 
 	if [[ ! -f ./pki/ca.crt ]] || \
@@ -138,12 +139,12 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 
 	load_key
 	FILE_NAME="${NAME}-${SERVER_IP}"
-	render "/etc/openvpn/client/templates/antizapret-udp.conf" > "/root/vpn/antizapret-$FILE_NAME-udp.ovpn"
-	render "/etc/openvpn/client/templates/antizapret-tcp.conf" > "/root/vpn/antizapret-$FILE_NAME-tcp.ovpn"
-	render "/etc/openvpn/client/templates/antizapret.conf" > "/root/vpn/antizapret-$FILE_NAME.ovpn"
-	render "/etc/openvpn/client/templates/vpn-udp.conf" > "/root/vpn/vpn-$FILE_NAME-udp.ovpn"
-	render "/etc/openvpn/client/templates/vpn-tcp.conf" > "/root/vpn/vpn-$FILE_NAME-tcp.ovpn"
-	render "/etc/openvpn/client/templates/vpn.conf" > "/root/vpn/vpn-$FILE_NAME.ovpn"
+	render "/etc/openvpn/client/templates/antizapret-udp.conf" > "/root/vpn/${NAME}/AZ-UDP-$(date +'%d-%m-%y').ovpn"
+    render "/etc/openvpn/client/templates/antizapret-tcp.conf" > "/root/vpn/${NAME}/AZ-TCP-$(date +'%d-%m-%y').ovpn"
+    render "/etc/openvpn/client/templates/antizapret.conf" > "/root/vpn/${NAME}/AZ-U+T-$(date +'%d-%m-%y').ovpn"
+    render "/etc/openvpn/client/templates/vpn-udp.conf" > "/root/vpn/${NAME}/GL-UDP-$(date +'%d-%m-%y').ovpn"
+    render "/etc/openvpn/client/templates/vpn-tcp.conf" > "/root/vpn/${NAME}/GL-TCP-$(date +'%d-%m-%y').ovpn"
+    render "/etc/openvpn/client/templates/vpn.conf" > "/root/vpn/${NAME}/GL-U+T-$(date +'%d-%m-%y').ovpn"
 
 	echo "OpenVPN configuration files for the client '$CLIENT' have been (re)created in '/root/vpn'"
 
@@ -210,8 +211,9 @@ PUBLIC_KEY=${PUBLIC_KEY}" > /etc/wireguard/key
 
 	FILE_NAME="${NAME}-${SERVER_IP}"
 	FILE_NAME="${FILE_NAME:0:18}"
-	render "/etc/wireguard/templates/antizapret-client-wg.conf" > "/root/vpn/antizapret-$FILE_NAME-wg.conf"
-	render "/etc/wireguard/templates/antizapret-client-am.conf" > "/root/vpn/antizapret-$FILE_NAME-am.conf"
+	render "/etc/wireguard/templates/antizapret-client-wg.conf" > "/root/vpn/${NAME}/AZ-WG-$(date +'%d-%m-%y').conf"
+    render "/etc/wireguard/templates/antizapret-client-am.conf" > "/root/vpn/${NAME}/AZ-AM-$(date +'%d-%m-%y').conf"
+
 
 	echo "# Client = ${CLIENT}
 # PrivateKey = ${CLIENT_PRIVATE_KEY}
@@ -242,8 +244,8 @@ AllowedIPs = ${CLIENT_IP}/32
 
 	FILE_NAME="${NAME}-${SERVER_IP}"
 	FILE_NAME="${FILE_NAME:0:25}"
-	render "/etc/wireguard/templates/vpn-client-wg.conf" > "/root/vpn/vpn-$FILE_NAME-wg.conf"
-	render "/etc/wireguard/templates/vpn-client-am.conf" > "/root/vpn/vpn-$FILE_NAME-am.conf"
+	render "/etc/wireguard/templates/vpn-client-wg.conf" > "/root/vpn/${NAME}/GL-WG-$(date +'%d-%m-%y').conf"
+	render "/etc/wireguard/templates/vpn-client-am.conf" > "/root/vpn/${NAME}/GL-AM-$(date +'%d-%m-%y').conf"
 
 	echo "# Client = ${CLIENT}
 # PrivateKey = ${CLIENT_PRIVATE_KEY}

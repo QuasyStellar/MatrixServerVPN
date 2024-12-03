@@ -67,8 +67,7 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 		exit 12
 	fi
 
-	rm -f /root/vpn/antizapret-$NAME-*.ovpn
-	rm -f /root/vpn/vpn-$NAME-*.ovpn
+	rm -rf /root/vpn/$NAME/
 	rm -f /etc/openvpn/client/keys/$CLIENT.crt
 	rm -f /etc/openvpn/client/keys/$CLIENT.key
 
@@ -89,8 +88,7 @@ else
 	sed -i '/^$/N;/^\n$/D' /etc/wireguard/antizapret.conf
 	sed -i '/^$/N;/^\n$/D' /etc/wireguard/vpn.conf
 
-	rm -f /root/vpn/antizapret-"${NAME:0:18}"-*.conf
-	rm -f /root/vpn/vpn-"${NAME:0:25}"-*.conf
+	rm -rf /root/vpn/${NAME
 
 	if systemctl is-active --quiet wg-quick@antizapret; then
 		wg syncconf antizapret <(wg-quick strip antizapret 2>/dev/null)
