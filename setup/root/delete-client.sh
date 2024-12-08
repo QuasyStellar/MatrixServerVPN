@@ -88,7 +88,7 @@ else
 	sed -i '/^$/N;/^\n$/D' /etc/wireguard/antizapret.conf
 	sed -i '/^$/N;/^\n$/D' /etc/wireguard/vpn.conf
 
-	rm -rf /root/vpn/${NAME
+	rm -rf /root/vpn/${NAME}
 
 	if systemctl is-active --quiet wg-quick@antizapret; then
 		wg syncconf antizapret <(wg-quick strip antizapret 2>/dev/null)
