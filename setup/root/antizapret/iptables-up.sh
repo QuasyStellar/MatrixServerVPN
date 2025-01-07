@@ -9,24 +9,49 @@ cd "$HERE"
 
 INTERFACE=$(ip route | grep '^default' | awk '{print $5}')
 if [[ -z "$INTERFACE" ]]; then
-    echo "Default network interface not found!"
-    exit 1
+	echo "Default network interface not found!"
+	exit 1
 fi
 
 # filter
 # INPUT connection tracking
 iptables -w -A INPUT -m conntrack --ctstate INVALID -j DROP
-# DROP ping request
-iptables -w -A INPUT -i "$INTERFACE" -p icmp --icmp-type echo-request -j DROP
-# ACCEPT ports
-iptables -w -A INPUT -i "$INTERFACE" -p tcp -m multiport --dports 22,80,443,50080,50443 -j ACCEPT
-iptables -w -A INPUT -i "$INTERFACE" -p udp -m multiport --dports 80,443,50080,50443,51080,51443,52080,52443 -j ACCEPT
+ip6tables -w -A INPUT -m conntrack --ctstate INVALID -j DROP
+# DROP all ICMP-packets except ICMP Fragmentation Needed and ICMPv6 Packet Too Big
+iptables -w -A INPUT -i "$INTERFACE" -p icmp --icmp-type fragmentation-needed -j ACCEPT
+iptables -w -A INPUT -i "$INTERFACE" -p icmp -j DROP
+ip6tables -w -A INPUT -i "$INTERFACE" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
+ip6tables -w -A INPUT -i "$INTERFACE" -p icmpv6 -j DROP
 # Attack and scan protection
-iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m recent --name ANTIZAPRET-BLOCKLIST --set
-iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m recent --name ANTIZAPRET-BLOCKLIST --update --seconds 10 --hitcount 11 -j DROP
+ipset create antizapret-block hash:ip timeout 600
+ipset create antizapret-watch hash:ip,port timeout 60
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m set ! --match-set antizapret-watch src,dst -m hashlimit --hashlimit-above 10/hour --hashlimit-burst 10 --hashlimit-mode srcip --hashlimit-srcmask 24 --hashlimit-name antizapret-port --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block src --exist
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p udp -m set ! --match-set antizapret-watch src,dst -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name antizapret-port-udp --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block src --exist
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p tcp -m set ! --match-set antizapret-watch src,dst -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name antizapret-port-tcp --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block src --exist
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p udp -m hashlimit --hashlimit-above 1500/hour --hashlimit-burst 1500 --hashlimit-mode srcip --hashlimit-name antizapret-conn-udp --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block src --exist
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p tcp -m hashlimit --hashlimit-above 500/hour --hashlimit-burst 500 --hashlimit-mode srcip --hashlimit-name antizapret-conn-tcp --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block src --exist
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m set --match-set antizapret-block src -j DROP
+iptables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -j SET --add-set antizapret-watch src,dst
+iptables -w -A OUTPUT -o "$INTERFACE" -p tcp --tcp-flags RST RST -j DROP
+iptables -w -A OUTPUT -o "$INTERFACE" -p icmp --icmp-type fragmentation-needed -j ACCEPT
+iptables -w -A OUTPUT -o "$INTERFACE" -p icmp -j DROP
+ipset create antizapret-block6 hash:ip timeout 600 family inet6
+ipset create antizapret-watch6 hash:ip,port timeout 60 family inet6
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m set ! --match-set antizapret-watch6 src,dst -m hashlimit --hashlimit-above 10/hour --hashlimit-burst 10 --hashlimit-mode srcip --hashlimit-srcmask 24 --hashlimit-name antizapret-port6 --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p udp -m set ! --match-set antizapret-watch6 src,dst -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name antizapret-port-udp6 --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p tcp -m set ! --match-set antizapret-watch6 src,dst -m hashlimit --hashlimit-above 5/hour --hashlimit-burst 5 --hashlimit-mode srcip --hashlimit-name antizapret-port-tcp6 --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p udp -m hashlimit --hashlimit-above 1500/hour --hashlimit-burst 1500 --hashlimit-mode srcip --hashlimit-name antizapret-conn-udp6 --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -p tcp -m hashlimit --hashlimit-above 500/hour --hashlimit-burst 500 --hashlimit-mode srcip --hashlimit-name antizapret-conn-tcp6 --hashlimit-htable-expire 60000 -j SET --add-set antizapret-block6 src --exist
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -m set --match-set antizapret-block6 src -j DROP
+ip6tables -w -A INPUT -i "$INTERFACE" -m conntrack --ctstate NEW -j SET --add-set antizapret-watch6 src,dst
+ip6tables -w -A OUTPUT -o "$INTERFACE" -p tcp --tcp-flags RST RST -j DROP
+ip6tables -w -A OUTPUT -o "$INTERFACE" -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
+ip6tables -w -A OUTPUT -o "$INTERFACE" -p icmpv6 -j DROP
 # FORWARD connection tracking
 iptables -w -A FORWARD -m conntrack --ctstate INVALID -j DROP
 iptables -w -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED,DNAT -j ACCEPT
+ip6tables -w -A FORWARD -m conntrack --ctstate INVALID -j DROP
+ip6tables -w -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED,DNAT -j ACCEPT
 # ANTIZAPRET-ACCEPT
 iptables -w -N ANTIZAPRET-ACCEPT
 iptables -w -A FORWARD -s 10.29.0.0/16 -m connmark --mark 0x1 -j ANTIZAPRET-ACCEPT
@@ -41,6 +66,7 @@ iptables -w -A FORWARD -s 10.28.0.0/15 -j ACCEPT
 iptables -w -A FORWARD -j REJECT --reject-with icmp-port-unreachable
 # OUTPUT connection tracking
 iptables -w -A OUTPUT -m conntrack --ctstate INVALID -j DROP
+ip6tables -w -A OUTPUT -m conntrack --ctstate INVALID -j DROP
 
 # nat
 # OpenVPN TCP port redirection for backup connections

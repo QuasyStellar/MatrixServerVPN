@@ -15,6 +15,8 @@ systemctl stop dnsmap &>/dev/null
 systemctl disable dnsmap &>/dev/null
 systemctl stop ferm &>/dev/null
 systemctl disable ferm &>/dev/null
+systemctl stop openvpn-server@antizapret-no-cipher &>/dev/null
+systemctl disable openvpn-server@antizapret-no-cipher &>/dev/null
 rm -f /etc/knot-resolver/knot-aliases-alt.conf
 rm -f /etc/knot-resolver/hosts.conf
 rm -f /etc/sysctl.d/10-conntrack.conf
@@ -27,6 +29,8 @@ rm -f /etc/openvpn/server/antizapret.conf
 rm -f /etc/openvpn/server/logs/*
 rm -f /etc/openvpn/server/keys/dh2048.pem
 rm -f /etc/openvpn/client/templates/*
+rm -f /etc/openvpn/client/templates/antizapret-no-cipher.conf
+rm -f /etc/openvpn/server/antizapret-no-cipher.conf
 rm -f /etc/wireguard/templates/*
 rm -f /etc/apt/sources.list.d/amnezia*
 rm -f /var/lib/knot-resolver/*
@@ -35,8 +39,11 @@ rm -f /root/upgrade.sh
 rm -f /root/generate.sh
 rm -f /root/Enable-OpenVPN-DCO.sh
 rm -f /root/upgrade-openvpn.sh
+rm -f /root/create-swap.sh
 rm -f /root/*.ovpn
 rm -f /root/*.conf
+rm -f /root/vpn/antizapret-*-no-cipher.ovpn
+rm -f /root/vpn/old/antizapret-*-no-cipher.ovpn
 rm -rf /root/easy-rsa-ipsec
 rm -rf /root/.gnupg
 rm -rf /root/dnsmap
@@ -48,8 +55,31 @@ if [[ -d "/root/easy-rsa-ipsec/easyrsa3/pki" ]]; then
 fi
 mv -f /root/openvpn /usr/local/src/openvpn &>/dev/null
 mv -f /etc/knot-resolver/blocked-hosts.conf /etc/knot-resolver/hosts.conf &>/dev/null
-/root/antizapret/iptables-down.sh &>/dev/null
-apt-get purge python3-dnslib gnupg2 amneziawg ferm &>/dev/null
+apt-get purge -y python3-dnslib gnupg2 ferm libpam0g-dev &>/dev/null
+apt-get purge -y amneziawg &>/dev/null
+#/root/antizapret/iptables-down.sh &>/dev/null
+
+systemctl stop kresd@1 &>/dev/null
+systemctl stop antizapret &>/dev/null
+systemctl stop antizapret-update.service &>/dev/null
+systemctl stop antizapret-update.timer &>/dev/null
+systemctl stop openvpn-server@antizapret-udp &>/dev/null
+systemctl stop openvpn-server@antizapret-tcp &>/dev/null
+systemctl stop openvpn-server@vpn-udp &>/dev/null
+systemctl stop openvpn-server@vpn-tcp &>/dev/null
+systemctl stop wg-quick@antizapret &>/dev/null
+systemctl stop wg-quick@vpn &>/dev/null
+
+systemctl disable kresd@1 &>/dev/null
+systemctl disable antizapret &>/dev/null
+systemctl disable antizapret-update.service &>/dev/null
+systemctl disable antizapret-update.timer &>/dev/null
+systemctl disable openvpn-server@antizapret-udp &>/dev/null
+systemctl disable openvpn-server@antizapret-tcp &>/dev/null
+systemctl disable openvpn-server@vpn-udp &>/dev/null
+systemctl disable openvpn-server@vpn-tcp &>/dev/null
+systemctl disable wg-quick@antizapret &>/dev/null
+systemctl disable wg-quick@vpn &>/dev/null
 
 #
 # Завершим выполнение скрипта при ошибке
@@ -80,7 +110,6 @@ if [[ "$EUID" -ne 0 ]]; then
 	exit 3
 fi
 
-SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 cd /root
 
 #
@@ -106,7 +135,6 @@ fi
 echo ""
 echo -e "\e[1;32mInstalling AntiZapret VPN + traditional VPN...\e[0m"
 echo "OpenVPN + WireGuard + AmneziaWG"
-echo ""
 
 #
 # Спрашиваем о настройках
@@ -119,7 +147,7 @@ until [[ $OPENVPN_PATCH =~ ^[0-2]$ ]]; do
 	read -rp "Version choice [0-2]: " -e -i 1 OPENVPN_PATCH
 done
 echo ""
-echo "OpenVPN DCO lowers CPU load, saves battery on mobile devices, boosts data speeds, and only supports AES-128-GCM and AES-256-GCM encryption protocols"
+echo "OpenVPN DCO lowers CPU load, saves battery on mobile devices, boosts data speeds, and only supports AES-128-GCM, AES-256-GCM and CHACHA20-POLY1305 encryption protocols"
 until [[ $OPENVPN_DCO =~ (y|n) ]]; do
 	read -rp "Turn on OpenVPN DCO? [y/n]: " -e -i y OPENVPN_DCO
 done
@@ -158,6 +186,7 @@ until [[ $INSTALL_SSHGUARD =~ (y|n) ]]; do
 	read -rp "Install SSHGuard to protect this server from brute-force attacks on SSH? [y/n]: " -e -i y INSTALL_SSHGUARD
 done
 echo ""
+echo "Warning! Network attack and scan protection may block the work of some third-party applications!"
 until [[ $PROTECT_SERVER =~ (y|n) ]]; do
 	read -rp "Enable network attack and scan protection for this server? [y/n]: " -e -i y PROTECT_SERVER
 done
@@ -206,7 +235,7 @@ DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y -o Dpkg::Options::="--for
 
 #
 # Ставим необходимые пакеты
-DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y git openvpn iptables easy-rsa gawk knot-resolver idn sipcalc python3-pip wireguard diffutils dnsutils socat lua-cqueues
+DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y git openvpn iptables easy-rsa gawk knot-resolver idn sipcalc python3-pip wireguard diffutils dnsutils socat lua-cqueues ipset
 if [[ "$INSTALL_SSHGUARD" == "y" ]]; then
 	DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y sshguard
 else
@@ -217,24 +246,29 @@ apt-get autoclean
 PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install --force-reinstall dnslib
 
 #
+# Клонируем репозиторий
+rm -rf /tmp/antizapret
+git clone https://github.com/GubernievS/AntiZapret-VPN.git /tmp/antizapret
+
+#
 # Сохраняем пользовательские настройки и пользовательский обработчик custom.sh
-mv -f /root/antizapret/config/* $SCRIPT_DIR/setup/root/antizapret/config || true
-mv -f /root/antizapret/custom.sh $SCRIPT_DIR/setup/root/antizapret/custom.sh || true
+mv -f /root/antizapret/config/* /tmp/antizapret/setup/root/antizapret/config || true
+mv -f /root/antizapret/custom.sh /tmp/antizapret/setup/root/antizapret/custom.sh || true
 
 #
 # Восстанавливаем из бэкапа пользователей vpn
-mv -f /root/easyrsa3 $SCRIPT_DIR/setup/etc/openvpn || true
-mv -f /root/wireguard/antizapret.conf $SCRIPT_DIR/setup/etc/wireguard || true
-mv -f /root/wireguard/vpn.conf $SCRIPT_DIR/setup/etc/wireguard || true
-mv -f /root/wireguard/key $SCRIPT_DIR/setup/etc/wireguard || true
+mv -f /root/easyrsa3 /tmp/antizapret/setup/etc/openvpn || true
+mv -f /root/wireguard/antizapret.conf /tmp/antizapret/setup/etc/wireguard || true
+mv -f /root/wireguard/vpn.conf /tmp/antizapret/setup/etc/wireguard || true
+mv -f /root/wireguard/key /tmp/antizapret/setup/etc/wireguard || true
 rm -rf /root/wireguard
 
 #
 # Копируем нужные файлы и папки, удаляем не нужные
-find $SCRIPT_DIR -name '.gitkeep' -delete
+find /tmp/antizapret -name '.gitkeep' -delete
 rm -rf /root/antizapret
-cp -r $SCRIPT_DIR/setup/* /
-rm -rf $SCRIPT_DIR
+cp -r /tmp/antizapret/setup/* /
+rm -rf /tmp/antizapret
 
 #
 # Выставляем разрешения на запуск скриптов
@@ -294,7 +328,7 @@ fi
 #
 # Отключаем защиту от сетевых атак и сканирования
 if [[ "$PROTECT_SERVER" == "n" ]]; then
-	sed -i '/\(ANTIZAPRET-BLOCKLIST\|echo-request\)/s/^/#/' /root/antizapret/iptables-up.sh
+	sed -i '/\(antizapret-block\|antizapret-watch\|p icmp\|RST RST\)/s/^/#/' /root/antizapret/iptables-up.sh
 fi
 
 #
@@ -371,9 +405,21 @@ INSTALL_SSHGUARD=${INSTALL_SSHGUARD}
 PROTECT_SERVER=${PROTECT_SERVER}
 PROXY_DNS=${PROXY_DNS}" > /root/antizapret/setup
 
+#
+# Создадим файл подкачки размером 512 Мб если его нет
+if [[ -z "$(swapon --show)" ]]; then
+	set +e
+	SWAPFILE="/swapfile"
+	SWAPSIZE=512
+	dd if=/dev/zero of=$SWAPFILE bs=1M count=$SWAPSIZE
+	chmod 600 "$SWAPFILE"
+	mkswap "$SWAPFILE"
+	swapon "$SWAPFILE"
+	echo "$SWAPFILE none swap sw 0 0" >> /etc/fstab
+fi
+
 echo ""
 echo -e "\e[1;32mAntiZapret VPN + traditional VPN successful installation!\e[0m"
-echo ""
 echo "Rebooting..."
 
 #

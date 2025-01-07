@@ -51,7 +51,7 @@ fi
 
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y curl tar build-essential libssl-dev pkg-config libsystemd-dev libpam0g-dev automake libnl-genl-3-dev libcap-ng-dev
+DEBIAN_FRONTEND=noninteractive apt-get install --reinstall -y curl tar build-essential libssl-dev pkg-config libsystemd-dev automake libnl-genl-3-dev libcap-ng-dev
 apt-get autoremove -y
 apt-get autoclean
 VERSION=$(openvpn --version | head -n 1 | awk '{print $2}')
@@ -136,7 +136,7 @@ if (opcode == 7 || opcode == 8 || opcode == 10)\
 
 cd /usr/local/src/openvpn
 chmod +x ./configure
-./configure --enable-systemd=yes --disable-debug --disable-lzo --disable-lz4
+./configure --enable-systemd=yes --disable-debug --disable-lzo --disable-lz4 --disable-ofb-cfb --disable-ntlm --disable-plugins --disable-management --disable-fragment --disable-port-share --disable-wolfssl-options-h
 make
 make install
 systemctl daemon-reload

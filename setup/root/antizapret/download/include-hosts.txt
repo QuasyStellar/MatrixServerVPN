@@ -1,12 +1,16 @@
 # НЕ РЕДАКТИРУЙТЕ ЭТОТ ФАЙЛ!
 # Список от GubernievS и адреса из антизапрета - https://bitbucket.org/anticensority/antizapret-pac-generator-light/src/master/config/include-hosts-dist.txt (скопирован весь)
 youtube.com
+youtube-nocookie.com
+youtubeeducation.com
+youtubekids.com
 googlevideo.com
 ytimg.com
 ggpht.com
 googleapis.com
 gstatic.com
 youtu.be
+yt.be
 googleusercontent.com
 gvt1.com
 gvt2.com
@@ -50,11 +54,11 @@ discord.media
 #store.fastly.steamstatic.com
 cloudflare-ech.com
 urban-vpn.com
-#viber.com
-#viber.ru
-#viber.me
-#vb.me
-sibnet.ru
+viber.com
+viber.ru
+viber.me
+vb.me
+whoer.net
 
 # Ограничивают доступ из России - https://github.com/dartraiden/no-russia-hosts/blob/master/hosts.txt (список взят за основу)
 platform.activestate.com
@@ -241,11 +245,12 @@ phncdn.com
 tiktok.com
 tiktokv.com
 tiktokcdn.com
-tiktokcdn-eu.com
-tiktokcdn-us.com
+#tiktokcdn-eu.com
+#tiktokcdn-us.com
 ttwstatic.com
+#ttlivecdn.com
 lookerstudio.google.com
-loudflareinsights.com
+#cloudflareinsights.com
 soapui.org
 spotify.com
 githubcopilot.com
@@ -349,6 +354,7 @@ pimeyes.com
 chat.groq.com
 console.groq.com
 download.teamviewer.com
+dl.teamviewer.com
 community.teamviewer.com
 freeimages.com
 3dwarehouse.sketchup.com
@@ -402,11 +408,47 @@ yeggi.com
 omv-extras.org
 notebooklm.google.com
 softwareupdate.vmware.com
+docs.vmware.com
 members.summerana.com
 anythingllm.com
 wikidot.com
 logo.com
 pcmag.com
+foxitsoftware.com
+mixupload.com
+codeium.com
+gateway.pinata.cloud
+ai.google.dev
+alkalimakersuite-pa.clients6.google.com
+iaai.com
+bid.cars
+api.app.prod.grazie.aws.intellij.net
+stripe.com
+sora.com
+yithemes.com
+vans.com
+vans.it
+vans.de
+remotethermo.com
+everyware-cloud.com
+gold.razer.com
+x.ai
+myfonts.com
+serato.com
+portal.cloud.hashicorp.com
+monotypefonts.com
+freemyip.com
+static.monotype.com
+beacon3d.com
+wifimap.io
+#app.element.io
+matrix.org
+vector.im
+atelecom.biz
+coolstuffgames.com
+board-game.co.uk
+github.githubassets.com
+vscode.dev
 
 # Внереестровые блокировки в России - https://bitbucket.org/anticensority/russian-unlisted-blocks/src/master/readme.txt (скопирован весь)
 tor.eff.org
