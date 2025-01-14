@@ -112,7 +112,7 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 				read -rp "Certificate expiration days (1-3650): " -e -i 3650 CLIENT_CERT_EXPIRE
 			done
 		fi
-		EASYRSA_CERT_EXPIRE=$CLIENT_CERT_EXPIRE /usr/share/easy-rsa/easyrsa --batch build-client-full $CLIENT nopass
+		EASYRSA_CERT_EXPIRE=3650 /usr/share/easy-rsa/easyrsa --batch build-client-full $CLIENT nopass
 		cp ./pki/issued/$CLIENT.crt /etc/openvpn/client/keys/$CLIENT.crt
 		cp ./pki/private/$CLIENT.key /etc/openvpn/client/keys/$CLIENT.key
 	else
