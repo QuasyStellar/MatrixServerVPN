@@ -71,7 +71,7 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 	rm -f /etc/openvpn/client/keys/$CLIENT.crt
 	rm -f /etc/openvpn/client/keys/$CLIENT.key
 
-	systemctl reload openvpn-server@*
+	systemctl restart openvpn-server@*
 
 	echo "OpenVPN client '$CLIENT' successfull deleted"
 

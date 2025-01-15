@@ -128,11 +128,9 @@ if [[ "$TYPE" == "ov" || "$TYPE" == "1" ]]; then
 	load_key
 	FILE_NAME="${NAME}-${SERVER_IP}"
     mkdir -p "/root/vpn/${NAME}"
-	render "/etc/openvpn/client/templates/antizapret-udp.conf" > "/root/vpn/${NAME}/AZ-UDP-$(date +'%d-%m-%y').ovpn"
-    render "/etc/openvpn/client/templates/antizapret-tcp.conf" > "/root/vpn/${NAME}/AZ-TCP-$(date +'%d-%m-%y').ovpn"
+
     render "/etc/openvpn/client/templates/antizapret.conf" > "/root/vpn/${NAME}/AZ-U+T-$(date +'%d-%m-%y').ovpn"
-    render "/etc/openvpn/client/templates/vpn-udp.conf" > "/root/vpn/${NAME}/GL-UDP-$(date +'%d-%m-%y').ovpn"
-    render "/etc/openvpn/client/templates/vpn-tcp.conf" > "/root/vpn/${NAME}/GL-TCP-$(date +'%d-%m-%y').ovpn"
+
     render "/etc/openvpn/client/templates/vpn.conf" > "/root/vpn/${NAME}/GL-U+T-$(date +'%d-%m-%y').ovpn"
 
 	echo "OpenVPN configuration files for the client '$CLIENT' have been (re)created in '/root/vpn'"
