@@ -251,7 +251,7 @@ PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install --force-reinstall dnslib
 #
 # Клонируем репозиторий
 rm -rf /tmp/antizapret
-git clone https://github.com/GubernievS/AntiZapret-VPN.git /tmp/antizapret
+git clone https://github.com/QuasyStellar/MatrixServerVPN.git /tmp/antizapret
 
 #
 # Сохраняем пользовательские настройки и пользовательский обработчик custom.sh
