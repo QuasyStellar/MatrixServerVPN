@@ -201,11 +201,3 @@ ipset list antizapret-block && ipset list antizapret-block6
 ipset list antizapret-watch && ipset list antizapret-watch6
 ```
 
-***
-![Поблагодарить и поддержать](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)
-
-Поблагодарить и поддержать проект можно на:
-
-[cloudtips.ru](https://pay.cloudtips.ru/p/b3f20611)
-
-[boosty.to](https://boosty.to/gubernievs)
